@@ -5,6 +5,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   def setup
     @user = users(:michael)
     @other_user = users(:archer)
+    @malory = users(:malory)
   end
 
   test "index as admin including pagination and delete links" do
@@ -14,8 +15,8 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select 'div.pagination'
     first_page_of_users = User.paginate(page: 1)
     first_page_of_users.each do |user|
-      assert_select 'a[href=?]', user_path(user), text: user.name
-      unless user == @user
+      assert_select 'a[href=?]', user_path(user), text: user.name unless user==@malory
+      unless user == @user or user==@malory
         assert_select 'a[href=?]', user_path(user), text: 'delete'
       end
     end
@@ -72,6 +73,12 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_not flash.empty?
     assert_redirected_to login_path
   end
+
+  test 'Should redirect when user isn\'t activated' do 
+    log_in_as(@user)
+    get user_path(@malory)
+    assert_redirected_to root_path
+  end 
 
   test "should not allow the admin attribute to be edited via the web" do
     log_in_as(@other_user)
